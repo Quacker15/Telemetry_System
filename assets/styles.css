@@ -1,0 +1,22 @@
+/* styles.css */
+body {
+    background-color: #f0f0f5;
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+.stButton>button {
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    border: none;
+}
+
+.stButton>button:hover {
+    background-color: #45a049;
+}
