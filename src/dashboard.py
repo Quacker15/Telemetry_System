@@ -40,4 +40,4 @@ with placeholder.container():
 
 # Wait for the specified interval before rerunning
 time.sleep(update_interval)
-st.experimental_rerun()
+st.rerun()
