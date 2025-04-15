@@ -40,7 +40,4 @@ with placeholder.container():
 
 # Wait for the specified interval before rerunning
 time.sleep(update_interval)
-st.experimental_rerun()
-# Note: The above code is a simplified version of the dashboard. In a real-world application,
-# you would want to handle exceptions, manage the database connection, and ensure that the
-# dashboard updates smoothly without blocking the main thread.
+st.rerun()
