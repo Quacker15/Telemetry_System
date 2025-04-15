@@ -1,41 +1,43 @@
-import os
-import subprocess
-from datetime import datetime
-from docx import Document
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import time
+from simulator import get_meter_readings
+from report_generator import generate_report
 
-def generate_report(meter_id, power):
-    # Ensure the reports directory exists
-    reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
-    os.makedirs(reports_dir, exist_ok=True)
+st.set_page_config(page_title="Electricity Telemetry Dashboard", layout="wide")
+st.title("Electricity Telemetry Dashboard")
 
-    # Generate a timestamped filename
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    docx_filename = f'{meter_id}_report_{timestamp}.docx'
-    docx_path = os.path.join(reports_dir, docx_filename)
+# Set the update interval (in seconds)
+update_interval = 5
 
-    # Create a new Word document
-    document = Document()
-    document.add_heading(f'Report for {meter_id}', 0)
-    document.add_paragraph(f'Report generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-    document.add_paragraph(f'Current Power Consumption: {power:.2f} Watts')
+# Create a placeholder for the real-time data
+placeholder = st.empty()
 
-    # Save the DOCX file
-    try:
-        document.save(docx_path)
-        print(f'DOCX report saved at: {docx_path}')
-    except Exception as e:
-        print(f'Error saving DOCX file: {e}')
-        return
+# Fetch the latest meter readings
+readings = get_meter_readings()
+df = pd.DataFrame(readings)
 
-    # Convert DOCX to PDF using LibreOffice
-    try:
-        subprocess.run([
-            'libreoffice',
-            '--headless',
-            '--convert-to', 'pdf',
-            '--outdir', reports_dir,
-            docx_path
-        ], check=True)
-        print(f'PDF report saved at: {os.path.splitext(docx_path)[0]}.pdf')
-    except subprocess.CalledProcessError as e:
-        print(f'Error converting DOCX to PDF: {e}')
+# Update the placeholder with new data
+with placeholder.container():
+    st.subheader("Real-Time Meter Readings")
+    st.dataframe(df)
+
+    st.subheader("Power Consumption Bar Chart")
+    bar_fig = px.bar(df, x='meter_id', y='power', labels={'power': 'Power (W)', 'meter_id': 'Meter ID'}, title="Current Power Consumption")
+    st.plotly_chart(bar_fig, use_container_width=True)
+
+    st.subheader("Power Consumption Distribution")
+    pie_fig = px.pie(df, names='meter_id', values='power', title="Power Consumption Distribution")
+    st.plotly_chart(pie_fig, use_container_width=True)
+
+    st.subheader("Generate Report")
+    selected_meter = st.selectbox("Select a meter to generate report", df['meter_id'], key="report_meter_selectbox")
+    if st.button("Generate Report"):
+        selected_power = df[df['meter_id'] == selected_meter]['power'].values[0]
+        generate_report(selected_meter, selected_power)
+        st.success(f"Report for {selected_meter} generated successfully.")
+
+# Wait for the specified interval before rerunning
+time.sleep(update_interval)
+st.experimental_rerun()
